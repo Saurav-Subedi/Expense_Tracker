@@ -20,6 +20,7 @@ def search_income(request):
         data = income.values()
         return JsonResponse(list(data), safe=False)
 
+from django.contrib.auth.models import User
 
 @login_required(login_url='/authentication/login')
 def index(request):
@@ -28,7 +29,19 @@ def index(request):
     paginator = Paginator(income, 5)
     page_number = request.GET.get('page')
     page_obj = Paginator.get_page(paginator, page_number)
-    currency = UserPreference.objects.get(user=request.user).currency
+
+    try:
+        user_preference = UserPreference.objects.get(user=request.user)
+        currency = user_preference.currency
+    except UserPreference.DoesNotExist:
+        # Handle the case when UserPreference does not exist for the current user
+        # You might want to set a default currency or take appropriate actions.
+        currency = "DefaultCurrency"
+    except User.DoesNotExist:
+        # Handle the case when the User does not exist
+        # You might want to redirect to the login page or take other appropriate actions.
+        currency = "DefaultCurrency"
+
     context = {
         'income': income,
         'page_obj': page_obj,
